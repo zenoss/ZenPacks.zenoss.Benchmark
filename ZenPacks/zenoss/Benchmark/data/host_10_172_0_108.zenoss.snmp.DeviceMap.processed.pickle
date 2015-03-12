@@ -1,0 +1,44 @@
+(lp1
+(iProducts.DataCollector.plugins.DataMaps
+ObjectMap
+p2
+(dp3
+S'modname'
+p4
+S''
+sS'compname'
+p5
+S''
+sS'snmpSysName'
+p6
+S'perf2-switch'
+p7
+sS'snmpOid'
+p8
+S'.1.3.6.1.4.1.9.1.697'
+p9
+sS'snmpContact'
+p10
+S' '
+sS'classname'
+p11
+S''
+sS'snmpDescr'
+p12
+S'Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 12.2(50)SE5, RELEASE SOFTWARE (fc1)\r\nTechnical Support: http://www.cisco.com/techsupport\r\nCopyright (c) 1986-2010 by Cisco Systems, Inc.\r\nCompiled Tue 28-Sep-10 13:44 by prod_rel_team'
+p13
+sS'snmpLocation'
+p14
+S' '
+sS'_attrs'
+p15
+(lp16
+g14
+ag12
+ag10
+ag6
+ag8
+ag5
+ag4
+ag11
+asba.

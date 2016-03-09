@@ -8,12 +8,13 @@ p4
 (lp5
 sS'relname'
 p6
-S'voltagesensors'
+S'cpus'
 p7
 sS'compname'
 p8
-S''
-sS'parentId'
+S'hw'
 p9
+sS'parentId'
+p10
 S''
 sba.

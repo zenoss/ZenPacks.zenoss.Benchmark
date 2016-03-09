@@ -97,6 +97,52 @@
             "ContainerPath": "/var/zenoss",
             "Permission": "0775"
         }
-        ]
+        ],
+        "MonitoringProfile": {
+            "GraphConfigs": [
+                {
+                    "datapoints": [
+                        {
+                            "aggregator": "max",
+                            "fill": false,
+                            "id": "applyDataMaps",
+                            "legend": "Duration",
+                            "metric": "zenmodelerbench.applyDataMaps",
+                            "metricSource": "zenmodelerbench",
+                            "name": "ApplyDataMap Duration",
+                            "rate": false,
+                            "type": "line"
+                        }
+                    ],
+                    "description": "ApplyDataMaps Duration",
+                    "footer": false,
+                    "id": "applydatamaps",
+                    "name": "ApplyDataMap Duration",
+                    "range": {
+                        "end": "0s-ago",
+                        "start": "1h-ago"
+                    },
+                    "returnset": "EXACT",
+                    "type": "line",
+                    "yAxisLabel": "Metrics"
+                }
+            ],
+            "MetricConfigs": [
+                {
+                    "Description": "zenmodelerbench internal metrics",
+                    "ID": "zenmodelerbench",
+                    "Metrics": [
+                        {
+                            "Counter": true,
+                            "Description": "ApplyDataMap Duration.",
+                            "ID": "zenmodelerbench.applyDataMaps",
+                            "Name": "ApplyDataMaps Duration",
+                            "Unit": "Count"
+                        }
+                    ],
+                    "Name": "zenmodelerbench internal metrics"
+                }
+            ]
+        }
     }
 }

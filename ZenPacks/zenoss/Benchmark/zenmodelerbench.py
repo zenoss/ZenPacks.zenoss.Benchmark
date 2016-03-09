@@ -48,19 +48,14 @@ from Products.ZenCollector.services.config import DeviceProxy
 from Products.ZenCollector.daemon import DUMMY_LISTENER
 from Products.DataCollector.plugins.DataMaps import ObjectMap
 
+import time
+
 here = lambda *x: os.path.join(os.path.dirname(__file__), *x)
 
 unused(Globals, DeviceProxy)
 
 COLLECTOR_NAME = 'zenmodelerbench'
 log = logging.getLogger("zen.%s" % COLLECTOR_NAME)
-
-
-maps = []
-
-for fname in os.walk(here('data')).next()[2]:
-    with open(here('data', fname)) as f:
-        maps.extend(cPickle.load(f))
 
 
 class ModelerBenchPreferences(object):
@@ -85,7 +80,7 @@ class ModelerBenchPreferences(object):
         self.configCycleInterval = 20*60
 
     def postStartupTasks(self):
-        return
+        return []
 
     def buildOptions(self, parser):
         """
@@ -96,9 +91,10 @@ class ModelerBenchPreferences(object):
                           help='Print statistics to log every 2 secs')
 
         parser.add_option('--datamapdir', dest='datamapdir',
-                          default='.',
+                          default='./data/medium',
                           help='Directory containing datamaps')
 
+        # Not used for now
         parser.add_option('--rate',
                           dest='datamaprate',
                           default=5.,
@@ -115,8 +111,44 @@ def random_ip():
     return socket.inet_ntoa(struct.pack('>I', random.randint(1, 0xffffffff)))
 
 
+RANDOM_MASKS = [16, 18, 20, 24, 26, 28]
+
+
+def random_mask():
+    return random.choice(RANDOM_MASKS)
+
+
 def random_id():
     return md5.md5(os.urandom(20)).hexdigest()[:10]
+
+
+def hack_interface_data(data_maps):
+    for data_map in data_maps:
+        for object_map in data_map.maps:
+            if "setIpAddresses" in object_map._attrs:
+                ip = random_ip()
+                mask = random_mask()
+                object_map.setIpAddresses = [ "{0}/{1}".format(ip, mask) ] # RANDOM IP
+
+    return data_maps
+
+
+def hack_maps(maps):
+    """ Hack the interfaces map to inject random ips """
+    hacked_maps = []
+    for map_file_name, maps in maps.iteritems():
+        if "zenoss.snmp.InterfaceMap.processed.pickle" in map_file_name:
+            maps = hack_interface_data(maps)
+        hacked_maps.extend(maps)
+    return hacked_maps
+
+
+def load_maps(maps_path):
+    maps = {}
+    for fname in os.walk(here(maps_path)).next()[2]:
+        with open(here(maps_path, fname)) as f:
+            maps[fname] = cPickle.load(f)
+    return maps
 
 
 class ZenModelerBenchDaemon(CollectorDaemon):
@@ -130,28 +162,39 @@ class ZenModelerBenchDaemon(CollectorDaemon):
                                                     configurationListener,
                                                     initializationCallback,
                                                     stoppingCallback)
+        self.devices_processed = 0
+        self.maps = load_maps(self.options.datamapdir)
 
     @defer.inlineCallbacks
     def publishLoop(self):
-        reactor.callLater(self.options.datamaprate, self.publishLoop)
         yield self.publish()
+        # For now we only send another device once the previous one has finished
+        # to measure how low took the hub to process the applydatamap call
+        #
+        reactor.callLater(0, self.publishLoop)
 
     def config(self):
         return self.services.get('DiscoverService')
 
     @defer.inlineCallbacks
     def publish(self):
-        result = yield self.config().callRemote("createDevice", random_ip(),
-                    deviceName=random_id(), devicePath="/Network/Cisco")
+        d_name = random_id()
+        d_ip = random_ip()
+        result = yield self.config().callRemote("createDevice", d_ip,
+                    deviceName=d_name, devicePath="/Server/Linux")
+
         if isinstance(result, Failure):
             self.log.exception("Unable to create device")
             return
         dev, created = result
         id_ = dev.getId()
-        x = yield self.config().callRemote("applyDataMaps", id_, maps)
-        print x
-        if x:
-            self.log.info("CHANGES TO DEVICE MADE")
+        hacked_maps = hack_maps(self.maps) # create random ips
+        start = time.time()
+        x = yield self.config().callRemote("applyDataMaps", id_, hacked_maps)
+        duration = time.time()-start
+        self.log.info("ApplyDataMaps took {0} seconds for device {1} / {2}".format(duration, d_name, d_ip))
+        self.rrdStats.gauge('zenmodelerbench.applyDataMaps', duration)
+        self.devices_processed = self.devices_processed + 1
 
 
     def run(self):

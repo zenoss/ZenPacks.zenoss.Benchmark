@@ -157,16 +157,20 @@ class ZenModelerBenchDaemon(CollectorDaemon):
                  configurationListener=DUMMY_LISTENER,
                  initializationCallback=None,
                  stoppingCallback=None):
-        self.initialServices += ['DiscoverService']
+        self.initialServices += ['DiscoverService', 'ZenPacks.zenoss.Benchmark.services.BenchmarkService']
         super(ZenModelerBenchDaemon, self).__init__(preferences, taskSplitter,
                                                     configurationListener,
                                                     initializationCallback,
                                                     stoppingCallback)
         self.devices_processed = 0
         self.maps = load_maps(self.options.datamapdir)
+        self.device_classes = None
 
     @defer.inlineCallbacks
     def publishLoop(self):
+        if not self.device_classes:
+            service_name = 'ZenPacks.zenoss.Benchmark.services.BenchmarkService'
+            self.device_classes = yield self.services.get(service_name).remoteMethod("getDeviceClasses").__call__()
         yield self.publish()
         # For now we only send another device once the previous one has finished
         # to measure how low took the hub to process the applydatamap call
@@ -180,8 +184,9 @@ class ZenModelerBenchDaemon(CollectorDaemon):
     def publish(self):
         d_name = random_id()
         d_ip = random_ip()
+        device_class = random.choice(self.device_classes) if self.device_classes else "/Server/Linux"
         result = yield self.config().callRemote("createDevice", d_ip,
-                    deviceName=d_name, devicePath="/Server/Linux")
+                    deviceName=d_name, devicePath=device_class)
 
         if isinstance(result, Failure):
             self.log.exception("Unable to create device")

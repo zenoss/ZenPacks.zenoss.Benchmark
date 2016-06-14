@@ -12,7 +12,7 @@
 # These variables are overwritten by Zenoss when the ZenPack is exported
 # or saved.  Do not modify them directly here.
 NAME = 'ZenPacks.zenoss.Benchmark'
-VERSION = '0.0.1dev'
+VERSION = '0.0.2dev'
 AUTHOR = 'Zenoss'
 LICENSE = "All Rights Reserved"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.zenoss']

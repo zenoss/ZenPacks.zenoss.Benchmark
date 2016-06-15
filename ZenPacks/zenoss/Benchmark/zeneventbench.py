@@ -79,6 +79,8 @@ class EventBenchPreferences(object):
         # Will be filled in based on buildOptions
         self.options = None
 
+        self.configCycleInterval = 20*60
+
 
     def postStartupTasks(self):
         return []

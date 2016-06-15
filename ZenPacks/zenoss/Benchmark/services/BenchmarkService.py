@@ -7,6 +7,7 @@ from Products.ZenHub.PBDaemon import translateError
 from Products.Zuul.interfaces import ICatalogTool
 
 import logging
+import random
 
 log = logging.getLogger("zenoss.Benchmark")
 
@@ -21,18 +22,18 @@ class BenchmarkService(HubService):
         """
         cat = ICatalogTool(self.dmd)
         query = Eq('objectImplements', "Products.ZenModel.Device.Device")
-        results = cat.search(query=query, limit=100)
+        results = cat.search(query=query, limit=200)
         pairs = []
         if results.total:
             for brain in results.results:
                 device_name = brain.id
-                device_path = brain.getPath()
-                query = [ Eq('objectImplements', "Products.ZenModel.DeviceComponent.DeviceComponent") ]
-                query.append( MatchGlob("path", "{0}/os/".format(device_path)) )
-                components_search = cat.search(query=And(*query), limit=1)
-                if components_search.total:
-                    component_name = components_search.results.next().id
-                    pairs.append( (device_name, component_name) )
+                device = brain.getObject()
+                component_name = ""
+                if hasattr(device, "componentSearch"):
+                    component_brains = device.componentSearch()
+                    if component_brains:
+                        component_name = random.choice(component_brains).id
+                pairs.append( (device_name, component_name) )
         return pairs
 
     @translateError

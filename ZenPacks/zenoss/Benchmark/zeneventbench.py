@@ -79,7 +79,6 @@ class EventBenchPreferences(object):
         # Will be filled in based on buildOptions
         self.options = None
 
-        self.configCycleInterval = 20*60
 
     def postStartupTasks(self):
         return []
@@ -113,6 +112,10 @@ class ZenEventBenchDaemon(CollectorDaemon):
         self.loading_devices = False
         self.reload_devices_interval = 10*60 # Every 10 minutes we reload the devices
         self.last_reload = 0
+        self.severities = []
+        for sev in xrange(0, 6):
+            self.severities.extend([sev]*(sev+1))
+        random.shuffle(self.severities)
         super(ZenEventBenchDaemon, self).__init__(preferences, taskSplitter,
                                                 configurationListener,
                                                 initializationCallback,
@@ -158,7 +161,7 @@ class ZenEventBenchDaemon(CollectorDaemon):
         if self.event_classes:
             event_class = random.choice(self.event_classes)
         evt = dict(device=device, component=component, eventClass=event_class,
-                   summary="Fake event {0}".format(time.time()), severity=5)
+                   summary="Fake event {0}".format(time.time()), severity=random.choice(self.severities))
         yield self.sendEvent(evt)
 
     def run(self):
